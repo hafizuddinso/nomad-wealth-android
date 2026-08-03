@@ -6,7 +6,20 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -14,62 +27,1890 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowCircleDown
+import androidx.compose.material.icons.filled.ArrowCircleUp
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Explore
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Logout
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.hafizuddin.nomadwealth.data.Account
+import com.hafizuddin.nomadwealth.data.Loan
+import com.hafizuddin.nomadwealth.data.SupabaseAuth
+import com.hafizuddin.nomadwealth.data.Transaction
+import com.hafizuddin.nomadwealth.data.UserSession
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.NumberFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
-data class Account(val name:String,val currency:String,val balance:Double)
-data class Tx(val title:String,val category:String,val amount:Double,val income:Boolean,val date:String)
-data class Loan(val name:String,val principal:Double,val remaining:Double,val payment:Double,val currency:String)
-data class Session(val name:String,val email:String,val token:String)
-enum class Route{LANDING,LOGIN,SIGNUP,APP}
-enum class Tab(val label:String){DASHBOARD("Dashboard"),ACCOUNTS("Accounts"),TRANSACTIONS("Transactions"),LOANS("Loans"),PROFILE("Profile")}
+class MainActivity : ComponentActivity() {
 
-class MainActivity:ComponentActivity(){override fun onCreate(savedInstanceState:Bundle?){super.onCreate(savedInstanceState);enableEdgeToEdge();setContent{NomadTheme{NomadApp()}}}}
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-private val dark=darkColorScheme(primary=Color(0xFF18C6B5),secondary=Color(0xFF56A8FF),background=Color(0xFF07151D),surface=Color(0xFF0E202A),error=Color(0xFFFF5C67))
-private val light=lightColorScheme(primary=Color(0xFF007E73),secondary=Color(0xFF1265A8),background=Color(0xFFF4F7F8),surface=Color.White)
-@Composable fun NomadTheme(content:@Composable()->Unit){MaterialTheme(colorScheme=if(androidx.compose.foundation.isSystemInDarkTheme()) dark else light,content=content)}
+        enableEdgeToEdge()
 
-@Composable fun NomadApp(){var route by remember{mutableStateOf(Route.LANDING)};var session by remember{mutableStateOf<Session?>(null)};AnimatedContent(route,label="route"){r->when(r){Route.LANDING->Landing({route=Route.LOGIN},{route=Route.SIGNUP});Route.LOGIN->Auth(false,{route=Route.LANDING}){session=it;route=Route.APP};Route.SIGNUP->Auth(true,{route=Route.LANDING}){route=Route.LOGIN};Route.APP->MainApp(session?:Session("Nomad","","")){session=null;route=Route.LANDING}}}}
+        setContent {
+            NomadWealthTheme {
+                NomadWealthApp()
+            }
+        }
+    }
+}
 
-@Composable fun Landing(login:()->Unit,signup:()->Unit){Column(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF06131C),Color(0xFF06323A),Color(0xFF06131C)))).statusBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally){Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){Icon(Icons.Default.Explore,null,tint=Color(0xFF18C6B5),modifier=Modifier.size(42.dp));Spacer(Modifier.width(10.dp));Column{Text("Nomad Wealth",color=Color.White,fontWeight=FontWeight.Bold,fontSize=20.sp);Text("Your money. Anywhere.",color=Color.White.copy(.65f),fontSize=12.sp)};Spacer(Modifier.weight(1f));TextButton(onClick=login){Text("Log in",color=Color.White)}};Spacer(Modifier.height(34.dp));Surface(color=Color(0xFF18C6B5).copy(.14f),shape=CircleShape){Text("PERSONAL FINANCE ACROSS COUNTRIES",color=Color(0xFF4FE6D8),fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(horizontal=14.dp,vertical=8.dp))};Spacer(Modifier.height(22.dp));Icon(Icons.Default.Explore,null,tint=Color(0xFF18C6B5),modifier=Modifier.size(88.dp));Text("Understand your money,\nwherever life takes you.",color=Color.White,fontSize=38.sp,fontWeight=FontWeight.Bold,lineHeight=43.sp,textAlign=TextAlign.Center);Spacer(Modifier.height(14.dp));Text("Track accounts, income, expenses, budgets, loans and currencies from one native Android app.",color=Color.White.copy(.72f),textAlign=TextAlign.Center,lineHeight=24.sp);Spacer(Modifier.height(24.dp));Feature(Icons.Default.Public,"Multi-currency accounts","Manage money across countries and currencies.");Feature(Icons.Default.SwapHoriz,"Simple money tracking","Record Money In and Money Out clearly.");Feature(Icons.Default.AccountBalance,"Loans and installments","Track principal, payments and remaining debt.");Spacer(Modifier.height(18.dp));Preview();Spacer(Modifier.height(22.dp));Button(onClick=signup,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(16.dp)){Icon(Icons.Default.PersonAdd,null);Spacer(Modifier.width(8.dp));Text("Create free account",fontWeight=FontWeight.Bold)};Spacer(Modifier.height(10.dp));OutlinedButton(onClick=login,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(16.dp)){Text("Log in",color=Color.White)};Spacer(Modifier.height(22.dp));Text("Nomad Wealth · Developed by Hafizuddin",color=Color.White.copy(.45f),fontSize=12.sp)}}
-@Composable fun Feature(icon:androidx.compose.ui.graphics.vector.ImageVector,title:String,text:String){Surface(color=Color.White.copy(.06f),shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth().padding(vertical=5.dp)){Row(Modifier.padding(16.dp),verticalAlignment=Alignment.CenterVertically){Icon(icon,null,tint=Color(0xFF4FE6D8),modifier=Modifier.size(28.dp));Spacer(Modifier.width(14.dp));Column{Text(title,color=Color.White,fontWeight=FontWeight.Bold);Text(text,color=Color.White.copy(.65f),fontSize=13.sp)}}}}
-@Composable fun Preview(){Surface(color=Color.White.copy(.06f),shape=RoundedCornerShape(24.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text("FINANCIAL PREVIEW",color=Color(0xFF4FE6D8),fontSize=11.sp,fontWeight=FontWeight.Bold);Text("Everything important in one view",color=Color.White,fontWeight=FontWeight.Bold,fontSize=19.sp);Spacer(Modifier.height(14.dp));Surface(color=Color(0xFF117C7A),shape=RoundedCornerShape(18.dp)){Column(Modifier.fillMaxWidth().padding(18.dp)){Text("Remaining balance",color=Color.White.copy(.7f),fontSize=12.sp);Text("€2,070.00",color=Color.White,fontSize=31.sp,fontWeight=FontWeight.Bold);Text("Income minus expenses",color=Color(0xFF6FF4E7),fontSize=12.sp)}}}}}
+private val DarkColors = darkColorScheme(
+    primary = Color(0xFF18C6B5),
+    secondary = Color(0xFF56A8FF),
+    background = Color(0xFF07151D),
+    surface = Color(0xFF0E202A),
+    error = Color(0xFFFF5C67)
+)
 
-class AuthApi{private val url=BuildConfig.SUPABASE_URL.trimEnd('/');private val key=BuildConfig.SUPABASE_ANON_KEY;fun configured()=url.startsWith("https://")&&key.isNotBlank();fun login(email:String,password:String):Result<Session>=runCatching{check(configured()){"Supabase is not configured. Add GitHub repository secrets."};val j=post("/auth/v1/token?grant_type=password",JSONObject().put("email",email).put("password",password));val token=j.optString("access_token");if(token.isBlank())error(j.optString("msg",j.optString("error_description",j.optString("error","Authentication failed."))));val u=j.optJSONObject("user");val n=u?.optJSONObject("user_metadata")?.optString("name")?.takeIf{it.isNotBlank()}?:email.substringBefore("@").replaceFirstChar{it.uppercase()};Session(n,email,token)};fun signup(name:String,email:String,password:String):Result<String>=runCatching{check(configured()){"Supabase is not configured. Add GitHub repository secrets."};val j=post("/auth/v1/signup",JSONObject().put("email",email).put("password",password).put("data",JSONObject().put("name",name)));if(j.has("error")||j.has("msg"))error(j.optString("msg",j.optString("error","Registration failed.")));"Account created. Confirm your email, then log in."};private fun post(path:String,body:JSONObject):JSONObject{val c=URL("$url$path").openConnection() as HttpURLConnection;return try{c.requestMethod="POST";c.connectTimeout=20000;c.readTimeout=20000;c.doOutput=true;c.setRequestProperty("Content-Type","application/json");c.setRequestProperty("apikey",key);c.setRequestProperty("Authorization","Bearer $key");c.outputStream.bufferedWriter().use{it.write(body.toString())};val s=if(c.responseCode in 200..299)c.inputStream else c.errorStream;JSONObject(s.bufferedReader().use{it.readText()}.ifBlank{"{}"})}finally{c.disconnect()}}}
+private val LightColors = lightColorScheme(
+    primary = Color(0xFF007E73),
+    secondary = Color(0xFF1265A8),
+    background = Color(0xFFF4F7F8),
+    surface = Color.White,
+    error = Color(0xFFB3261E)
+)
 
-@Composable fun Auth(signup:Boolean,back:()->Unit,success:(Session)->Unit){val api=remember{AuthApi()};val scope=rememberCoroutineScope();var name by remember{mutableStateOf("")};var email by remember{mutableStateOf("")};var pass by remember{mutableStateOf("")};var confirm by remember{mutableStateOf("")};var loading by remember{mutableStateOf(false)};var msg by remember{mutableStateOf("")};Scaffold(topBar={TopAppBar(title={Text(if(signup)"Create account" else "Log in")},navigationIcon={IconButton(onClick=back){Icon(Icons.Default.ArrowBack,"Back")}})}){pad->Column(Modifier.fillMaxSize().padding(pad).padding(22.dp).verticalScroll(rememberScrollState()),horizontalAlignment=Alignment.CenterHorizontally){Icon(Icons.Default.Explore,null,tint=MaterialTheme.colorScheme.primary,modifier=Modifier.size(70.dp));Text("Nomad Wealth",fontSize=26.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(24.dp));if(signup){OutlinedTextField(name,{name=it},label={Text("Your name")},modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(10.dp))};OutlinedTextField(email,{email=it},label={Text("Email")},modifier=Modifier.fillMaxWidth());Spacer(Modifier.height(10.dp));OutlinedTextField(pass,{pass=it},label={Text("Password")},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth());if(signup){Spacer(Modifier.height(10.dp));OutlinedTextField(confirm,{confirm=it},label={Text("Confirm password")},visualTransformation=PasswordVisualTransformation(),modifier=Modifier.fillMaxWidth())};if(msg.isNotBlank()){Spacer(Modifier.height(12.dp));Text(msg,color=if(msg.startsWith("Account created"))MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error)};Spacer(Modifier.height(18.dp));Button(onClick={msg="";if(!email.contains("@")||pass.length<6){msg="Enter a valid email and a password with at least 6 characters.";return@Button};if(signup&&(name.isBlank()||pass!=confirm)){msg=if(name.isBlank())"Enter your name." else "Passwords do not match.";return@Button};loading=true;scope.launch{if(signup){val r=withContext(Dispatchers.IO){api.signup(name.trim(),email.trim(),pass)};loading=false;r.onSuccess{msg=it}.onFailure{msg=it.message?:"Registration failed."}}else{val r=withContext(Dispatchers.IO){api.login(email.trim(),pass)};loading=false;r.onSuccess(success).onFailure{msg=it.message?:"Login failed."}}}},enabled=!loading,modifier=Modifier.fillMaxWidth().height(54.dp),shape=RoundedCornerShape(16.dp)){if(loading)CircularProgressIndicator(Modifier.size(22.dp),strokeWidth=2.dp)else Text(if(signup)"Create account" else "Log in",fontWeight=FontWeight.Bold)};if(!api.configured()){Spacer(Modifier.height(18.dp));Text("Authentication needs GitHub Secrets. The demo interface still builds.",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=12.sp,textAlign=TextAlign.Center)}}}}
+@Composable
+private fun NomadWealthTheme(
+    darkTheme: Boolean = true,
+    content: @Composable () -> Unit
+) {
+    MaterialTheme(
+        colorScheme = if (darkTheme) DarkColors else LightColors,
+        content = content
+    )
+}
 
-@Composable fun MainApp(session:Session,logout:()->Unit){var tab by remember{mutableStateOf(Tab.DASHBOARD)};val accounts=remember{mutableStateListOf(Account("Main account","EUR",1450.0),Account("Freelance wallet","USD",620.0))};val txs=remember{mutableStateListOf(Tx("Freelance payment","Income",600.0,true,"Today"),Tx("Rent","Housing",400.0,false,"Today"),Tx("Groceries","Food",48.0,false,"Yesterday"))};val loans=remember{mutableStateListOf(Loan("Education loan",5000.0,3200.0,180.0,"EUR"))};Scaffold(bottomBar={NavigationBar{Tab.entries.forEach{i->NavigationBarItem(selected=tab==i,onClick={tab=i},icon={Icon(when(i){Tab.DASHBOARD->Icons.Default.Home;Tab.ACCOUNTS->Icons.Default.CreditCard;Tab.TRANSACTIONS->Icons.Default.SwapHoriz;Tab.LOANS->Icons.Default.AccountBalance;Tab.PROFILE->Icons.Default.Person},i.label)},label={Text(i.label,fontSize=10.sp)})}}}){p->Box(Modifier.fillMaxSize().padding(p)){when(tab){Tab.DASHBOARD->Dashboard(session.name,accounts,txs);Tab.ACCOUNTS->Accounts(accounts);Tab.TRANSACTIONS->Transactions(txs);Tab.LOANS->Loans(loans);Tab.PROFILE->Profile(session,accounts.size,txs.size,loans.size,logout)}}}}
+private enum class Route {
+    LANDING,
+    LOGIN,
+    SIGNUP,
+    APP
+}
 
-@Composable fun Dashboard(name:String,accounts:List<Account>,txs:List<Tx>){val income=txs.filter{it.income}.sumOf{it.amount};val expense=txs.filter{!it.income}.sumOf{it.amount};LazyColumn(Modifier.fillMaxSize().padding(horizontal=16.dp),contentPadding=PaddingValues(top=18.dp,bottom=24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){item{Text("Overview",fontSize=34.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(10.dp));Surface(color=MaterialTheme.colorScheme.primary.copy(.12f),shape=RoundedCornerShape(22.dp)){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){Surface(color=MaterialTheme.colorScheme.primary,shape=CircleShape){Text(name.take(1).uppercase(),color=MaterialTheme.colorScheme.onPrimary,fontSize=24.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(horizontal=18.dp,vertical=12.dp))};Spacer(Modifier.width(14.dp));Column{Text(greeting().uppercase(),color=MaterialTheme.colorScheme.primary,fontSize=11.sp,fontWeight=FontWeight.Bold);Text(name,fontSize=25.sp,fontWeight=FontWeight.Bold);Text("Here is your financial overview",color=MaterialTheme.colorScheme.onSurfaceVariant)}}}};item{Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){Metric("Income",income,Color(0xFF25CF69),Modifier.weight(1f));Metric("Expenses",expense,Color(0xFFFF4D59),Modifier.weight(1f))}};item{Metric("Remaining this month",income-expense,MaterialTheme.colorScheme.secondary,Modifier.fillMaxWidth())};item{Text("Financial accounts",fontSize=22.sp,fontWeight=FontWeight.Bold)};items(accounts){AccountRow(it)};item{Text("Recent transactions",fontSize=22.sp,fontWeight=FontWeight.Bold)};items(txs){TxRow(it)}}}
-fun greeting():String{val h=Calendar.getInstance().get(Calendar.HOUR_OF_DAY);return if(h<12)"Good morning" else if(h<18)"Good afternoon" else "Good evening"}
-@Composable fun Metric(t:String,v:Double,c:Color,m:Modifier){Surface(modifier=m,shape=RoundedCornerShape(18.dp),tonalElevation=2.dp){Column(Modifier.padding(18.dp)){Text(t,color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=13.sp);Text(money(v),color=c,fontSize=25.sp,fontWeight=FontWeight.Bold)}}}
-@Composable fun Accounts(a:MutableList<Account>){var add by remember{mutableStateOf(false)};Header("Accounts","Manage money across currencies"){FilledTonalButton(onClick={add=true}){Icon(Icons.Default.Add,null);Text(" Add")}};LazyColumn(Modifier.fillMaxSize().padding(top=90.dp,start=16.dp,end=16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){items(a){AccountRow(it)}};if(add)AddDialog("Add account","Account name",{add=false}){a.add(Account(it,"EUR",0.0));add=false}}
-@Composable fun Transactions(t:MutableList<Tx>){var add by remember{mutableStateOf(false)};Header("Transactions","Your Money In and Money Out"){FilledTonalButton(onClick={add=true}){Icon(Icons.Default.Add,null);Text(" Add")}};LazyColumn(Modifier.fillMaxSize().padding(top=90.dp,start=16.dp,end=16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){items(t){TxRow(it)}};if(add)AddDialog("Add transaction","Transaction title",{add=false}){t.add(0,Tx(it,"Other",25.0,false,"Today"));add=false}}
-@Composable fun Loans(l:MutableList<Loan>){var add by remember{mutableStateOf(false)};Header("Loans","Track installments and remaining debt"){FilledTonalButton(onClick={add=true}){Icon(Icons.Default.Add,null);Text(" Add")}};LazyColumn(Modifier.fillMaxSize().padding(top=90.dp,start=16.dp,end=16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){items(l){x->Surface(shape=RoundedCornerShape(18.dp),tonalElevation=2.dp){Column(Modifier.fillMaxWidth().padding(18.dp)){Text(x.name,fontWeight=FontWeight.Bold,fontSize=18.sp);Text("Remaining: ${x.currency} ${x.remaining}",color=MaterialTheme.colorScheme.error);Text("Monthly payment: ${x.currency} ${x.payment}",color=MaterialTheme.colorScheme.onSurfaceVariant);Spacer(Modifier.height(10.dp));LinearProgressIndicator(progress={((x.principal-x.remaining)/x.principal).toFloat().coerceIn(0f,1f)},modifier=Modifier.fillMaxWidth())}}}};if(add)AddDialog("Add loan","Loan name",{add=false}){l.add(Loan(it,1000.0,1000.0,100.0,"EUR"));add=false}}
-@Composable fun Profile(s:Session,ac:Int,tc:Int,lc:Int,logout:()->Unit){Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(18.dp),horizontalAlignment=Alignment.CenterHorizontally){Text("Profile",modifier=Modifier.fillMaxWidth(),fontSize=34.sp,fontWeight=FontWeight.Bold);Spacer(Modifier.height(18.dp));Surface(color=MaterialTheme.colorScheme.primary.copy(.12f),shape=RoundedCornerShape(24.dp),modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(26.dp),horizontalAlignment=Alignment.CenterHorizontally){Surface(color=MaterialTheme.colorScheme.primary,shape=CircleShape){Text(s.name.take(2).uppercase(),color=MaterialTheme.colorScheme.onPrimary,fontSize=30.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(22.dp))};Spacer(Modifier.height(12.dp));Text(s.name,fontSize=25.sp,fontWeight=FontWeight.Bold);Text(s.email.ifBlank{"Demo profile"},color=MaterialTheme.colorScheme.onSurfaceVariant)}};Spacer(Modifier.height(14.dp));Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){Stat("$ac","Accounts",Modifier.weight(1f));Stat("$tc","Entries",Modifier.weight(1f));Stat("$lc","Loans",Modifier.weight(1f))};Spacer(Modifier.height(18.dp));Surface(shape=RoundedCornerShape(20.dp),tonalElevation=2.dp,modifier=Modifier.fillMaxWidth()){Column(Modifier.padding(18.dp)){Text("Account security",fontSize=19.sp,fontWeight=FontWeight.Bold);Text("Supabase email authentication",color=MaterialTheme.colorScheme.onSurfaceVariant);Text("HTTPS-only communication",color=MaterialTheme.colorScheme.onSurfaceVariant);Text("No service-role key included",color=MaterialTheme.colorScheme.onSurfaceVariant)}};Spacer(Modifier.height(18.dp));OutlinedButton(onClick=logout,modifier=Modifier.fillMaxWidth().height(52.dp)){Icon(Icons.Default.Logout,null);Spacer(Modifier.width(8.dp));Text("Log out")}}}
-@Composable fun Header(t:String,s:String,a:@Composable()->Unit){Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=18.dp),verticalAlignment=Alignment.CenterVertically){Column{Text(t,fontSize=31.sp,fontWeight=FontWeight.Bold);Text(s,color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=13.sp)};Spacer(Modifier.weight(1f));a()}}
-@Composable fun AccountRow(a:Account){Surface(shape=RoundedCornerShape(18.dp),tonalElevation=2.dp){Row(Modifier.fillMaxWidth().padding(18.dp),verticalAlignment=Alignment.CenterVertically){Icon(Icons.Default.CreditCard,null,tint=MaterialTheme.colorScheme.primary);Spacer(Modifier.width(12.dp));Column{Text(a.name,fontWeight=FontWeight.Bold);Text(a.currency,color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=12.sp)};Spacer(Modifier.weight(1f));Text("${a.currency} ${"%.2f".format(a.balance)}",fontWeight=FontWeight.Bold)}}}
-@Composable fun TxRow(t:Tx){Surface(shape=RoundedCornerShape(16.dp),tonalElevation=1.dp){Row(Modifier.fillMaxWidth().padding(15.dp),verticalAlignment=Alignment.CenterVertically){Icon(if(t.income)Icons.Default.ArrowCircleDown else Icons.Default.ArrowCircleUp,null,tint=if(t.income)Color(0xFF25CF69) else Color(0xFFFF4D59));Spacer(Modifier.width(12.dp));Column{Text(t.title,fontWeight=FontWeight.Bold);Text("${t.category} · ${t.date}",color=MaterialTheme.colorScheme.onSurfaceVariant,fontSize=12.sp)};Spacer(Modifier.weight(1f));Text("${if(t.income)"+" else "-"}${money(t.amount)}",color=if(t.income)Color(0xFF25CF69) else Color(0xFFFF4D59),fontWeight=FontWeight.Bold)}}}
-@Composable fun Stat(v:String,l:String,m:Modifier){Surface(modifier=m,shape=RoundedCornerShape(16.dp),tonalElevation=2.dp){Column(Modifier.padding(vertical=15.dp),horizontalAlignment=Alignment.CenterHorizontally){Text(v,fontSize=21.sp,fontWeight=FontWeight.Bold);Text(l,fontSize=11.sp,color=MaterialTheme.colorScheme.onSurfaceVariant)}}}
-@Composable fun AddDialog(t:String,f:String,d:()->Unit,add:(String)->Unit){var v by remember{mutableStateOf("")};AlertDialog(onDismissRequest=d,title={Text(t)},text={OutlinedTextField(v,{v=it},label={Text(f)})},confirmButton={TextButton(onClick={if(v.isNotBlank())add(v.trim())}){Text("Add")}},dismissButton={TextButton(onClick=d){Text("Cancel")}})}
-fun money(v:Double)=NumberFormat.getCurrencyInstance(Locale.GERMANY).format(v)
+private enum class AppTab(
+    val label: String,
+    val icon: ImageVector
+) {
+    DASHBOARD("Dashboard", Icons.Default.Home),
+    ACCOUNTS("Accounts", Icons.Default.CreditCard),
+    TRANSACTIONS("Transactions", Icons.Default.SwapHoriz),
+    LOANS("Loans", Icons.Default.AccountBalance),
+    PROFILE("Profile", Icons.Default.Person)
+}
+
+@Composable
+private fun NomadWealthApp() {
+    var route by remember {
+        mutableStateOf(Route.LANDING)
+    }
+
+    var session by remember {
+        mutableStateOf<UserSession?>(null)
+    }
+
+    AnimatedContent(
+        targetState = route,
+        label = "main-route"
+    ) { currentRoute ->
+
+        when (currentRoute) {
+            Route.LANDING -> {
+                LandingScreen(
+                    onLogin = {
+                        route = Route.LOGIN
+                    },
+                    onSignup = {
+                        route = Route.SIGNUP
+                    }
+                )
+            }
+
+            Route.LOGIN -> {
+                AuthenticationScreen(
+                    signup = false,
+                    onBack = {
+                        route = Route.LANDING
+                    },
+                    onLoginSuccess = { user ->
+                        session = user
+                        route = Route.APP
+                    },
+                    onSignupComplete = {
+                        route = Route.LOGIN
+                    }
+                )
+            }
+
+            Route.SIGNUP -> {
+                AuthenticationScreen(
+                    signup = true,
+                    onBack = {
+                        route = Route.LANDING
+                    },
+                    onLoginSuccess = { user ->
+                        session = user
+                        route = Route.APP
+                    },
+                    onSignupComplete = {
+                        route = Route.LOGIN
+                    }
+                )
+            }
+
+            Route.APP -> {
+                MainApplication(
+                    session = session ?: UserSession(
+                        name = "Nomad",
+                        email = "",
+                        accessToken = ""
+                    ),
+                    onLogout = {
+                        session = null
+                        route = Route.LANDING
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LandingScreen(
+    onLogin: () -> Unit,
+    onSignup: () -> Unit
+) {
+    val background = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF06131C),
+            Color(0xFF06323A),
+            Color(0xFF06131C)
+        )
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(background)
+            .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 30.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Explore,
+                contentDescription = null,
+                tint = Color(0xFF18C6B5),
+                modifier = Modifier.size(42.dp)
+            )
+
+            Spacer(
+                modifier = Modifier.width(10.dp)
+            )
+
+            Column {
+                Text(
+                    text = "Nomad Wealth",
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                )
+
+                Text(
+                    text = "Your money. Anywhere.",
+                    color = Color.White.copy(alpha = 0.65f),
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+
+            TextButton(
+                onClick = onLogin
+            ) {
+                Text(
+                    text = "Log in",
+                    color = Color.White
+                )
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(34.dp)
+        )
+
+        Surface(
+            color = Color(0xFF18C6B5).copy(alpha = 0.14f),
+            shape = CircleShape
+        ) {
+            Text(
+                text = "PERSONAL FINANCE ACROSS COUNTRIES",
+                color = Color(0xFF4FE6D8),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(
+                    horizontal = 14.dp,
+                    vertical = 8.dp
+                )
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+
+        Icon(
+            imageVector = Icons.Default.Explore,
+            contentDescription = null,
+            tint = Color(0xFF18C6B5),
+            modifier = Modifier.size(88.dp)
+        )
+
+        Spacer(
+            modifier = Modifier.height(16.dp)
+        )
+
+        Text(
+            text = "Understand your money,\nwherever life takes you.",
+            color = Color.White,
+            fontSize = 37.sp,
+            fontWeight = FontWeight.Bold,
+            lineHeight = 43.sp,
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        Text(
+            text = "Track accounts, income, expenses, budgets, loans and currencies from one native Android app.",
+            color = Color.White.copy(alpha = 0.72f),
+            textAlign = TextAlign.Center,
+            lineHeight = 24.sp
+        )
+
+        Spacer(
+            modifier = Modifier.height(28.dp)
+        )
+
+        FeatureCard(
+            icon = Icons.Default.Public,
+            title = "Multi-currency accounts",
+            description = "Manage money across countries and currencies."
+        )
+
+        FeatureCard(
+            icon = Icons.Default.SwapHoriz,
+            title = "Simple money tracking",
+            description = "Record Money In and Money Out clearly."
+        )
+
+        FeatureCard(
+            icon = Icons.Default.AccountBalance,
+            title = "Loans and installments",
+            description = "Track principal, payments and remaining debt."
+        )
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        FinancialPreview()
+
+        Spacer(
+            modifier = Modifier.height(22.dp)
+        )
+
+        Button(
+            onClick = onSignup,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.PersonAdd,
+                contentDescription = null
+            )
+
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
+
+            Text(
+                text = "Create free account",
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(10.dp)
+        )
+
+        OutlinedButton(
+            onClick = onLogin,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(54.dp),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text(
+                text = "Log in",
+                color = Color.White
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+
+        Text(
+            text = "Nomad Wealth · Developed by Hafizuddin",
+            color = Color.White.copy(alpha = 0.45f),
+            fontSize = 12.sp
+        )
+    }
+}
+
+@Composable
+private fun FeatureCard(
+    icon: ImageVector,
+    title: String,
+    description: String
+) {
+    Surface(
+        color = Color.White.copy(alpha = 0.06f),
+        shape = RoundedCornerShape(18.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 5.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                color = Color(0xFF18C6B5).copy(alpha = 0.14f),
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = Color(0xFF4FE6D8),
+                    modifier = Modifier
+                        .padding(12.dp)
+                        .size(25.dp)
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.width(14.dp)
+            )
+
+            Column {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = description,
+                    color = Color.White.copy(alpha = 0.65f),
+                    fontSize = 13.sp
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FinancialPreview() {
+    Surface(
+        color = Color.White.copy(alpha = 0.06f),
+        shape = RoundedCornerShape(24.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+            Text(
+                text = "FINANCIAL PREVIEW",
+                color = Color(0xFF4FE6D8),
+                fontSize = 11.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Everything important in one view",
+                color = Color.White,
+                fontWeight = FontWeight.Bold,
+                fontSize = 19.sp
+            )
+
+            Spacer(
+                modifier = Modifier.height(14.dp)
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color(0xFF108D83),
+                                Color(0xFF135B82)
+                            )
+                        ),
+                        shape = RoundedCornerShape(18.dp)
+                    )
+                    .padding(18.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Remaining balance",
+                        color = Color.White.copy(alpha = 0.70f),
+                        fontSize = 12.sp
+                    )
+
+                    Text(
+                        text = "€2,070.00",
+                        color = Color.White,
+                        fontSize = 31.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = "Income minus expenses",
+                        color = Color(0xFF6FF4E7),
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(
+                modifier = Modifier.height(12.dp)
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                PreviewMetric(
+                    title = "Income",
+                    value = "+ €4,250",
+                    color = Color(0xFF25CF69),
+                    modifier = Modifier.weight(1f)
+                )
+
+                PreviewMetric(
+                    title = "Expenses",
+                    value = "− €2,180",
+                    color = Color(0xFFFF4D59),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewMetric(
+    title: String,
+    value: String,
+    color: Color,
+    modifier: Modifier
+) {
+    Surface(
+        color = Color.White.copy(alpha = 0.05f),
+        shape = RoundedCornerShape(15.dp),
+        modifier = modifier
+    ) {
+        Column(
+            modifier = Modifier.padding(14.dp)
+        ) {
+            Text(
+                text = title,
+                color = Color.White.copy(alpha = 0.60f),
+                fontSize = 12.sp
+            )
+
+            Text(
+                text = value,
+                color = color,
+                fontWeight = FontWeight.Bold,
+                fontSize = 17.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun AuthenticationScreen(
+    signup: Boolean,
+    onBack: () -> Unit,
+    onLoginSuccess: (UserSession) -> Unit,
+    onSignupComplete: () -> Unit
+) {
+    val authentication = remember {
+        SupabaseAuth()
+    }
+
+    val scope = rememberCoroutineScope()
+
+    var name by remember {
+        mutableStateOf("")
+    }
+
+    var email by remember {
+        mutableStateOf("")
+    }
+
+    var password by remember {
+        mutableStateOf("")
+    }
+
+    var confirmPassword by remember {
+        mutableStateOf("")
+    }
+
+    var loading by remember {
+        mutableStateOf(false)
+    }
+
+    var message by remember {
+        mutableStateOf("")
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = if (signup) {
+                            "Create account"
+                        } else {
+                            "Log in"
+                        }
+                    )
+                },
+                navigationIcon = {
+                    IconButton(
+                        onClick = onBack
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { padding ->
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(22.dp)
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = Icons.Default.Explore,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(70.dp)
+            )
+
+            Text(
+                text = "Nomad Wealth",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = if (signup) {
+                    "Start building financial clarity"
+                } else {
+                    "Welcome back"
+                },
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(
+                modifier = Modifier.height(26.dp)
+            )
+
+            if (signup) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it
+                    },
+                    label = {
+                        Text("Your name")
+                    },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+            }
+
+            OutlinedTextField(
+                value = email,
+                onValueChange = {
+                    email = it
+                },
+                label = {
+                    Text("Email")
+                },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    password = it
+                },
+                label = {
+                    Text("Password")
+                },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (signup) {
+                Spacer(
+                    modifier = Modifier.height(10.dp)
+                )
+
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = {
+                        confirmPassword = it
+                    },
+                    label = {
+                        Text("Confirm password")
+                    },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (message.isNotBlank()) {
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
+                Text(
+                    text = message,
+                    color = if (message.startsWith("Account created")) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.height(18.dp)
+            )
+
+            Button(
+                onClick = {
+                    message = ""
+
+                    if (!email.contains("@")) {
+                        message = "Enter a valid email address."
+                        return@Button
+                    }
+
+                    if (password.length < 6) {
+                        message = "Password must have at least 6 characters."
+                        return@Button
+                    }
+
+                    if (signup && name.isBlank()) {
+                        message = "Enter your name."
+                        return@Button
+                    }
+
+                    if (signup && password != confirmPassword) {
+                        message = "Passwords do not match."
+                        return@Button
+                    }
+
+                    loading = true
+
+                    scope.launch {
+                        if (signup) {
+                            val result = withContext(Dispatchers.IO) {
+                                authentication.signUp(
+                                    name = name.trim(),
+                                    email = email.trim(),
+                                    password = password
+                                )
+                            }
+
+                            loading = false
+
+                            result
+                                .onSuccess { resultMessage ->
+                                    message = resultMessage
+                                    onSignupComplete()
+                                }
+                                .onFailure { error ->
+                                    message = error.message
+                                        ?: "Registration failed."
+                                }
+                        } else {
+                            val result = withContext(Dispatchers.IO) {
+                                authentication.signIn(
+                                    email = email.trim(),
+                                    password = password
+                                )
+                            }
+
+                            loading = false
+
+                            result
+                                .onSuccess { userSession ->
+                                    onLoginSuccess(userSession)
+                                }
+                                .onFailure { error ->
+                                    message = error.message
+                                        ?: "Login failed."
+                                }
+                        }
+                    }
+                },
+                enabled = !loading,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                if (loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = if (signup) {
+                            "Create account"
+                        } else {
+                            "Log in"
+                        },
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+
+            if (!authentication.configured()) {
+                Spacer(
+                    modifier = Modifier.height(18.dp)
+                )
+
+                Text(
+                    text = "Authentication needs GitHub Secrets.\nThe demonstration interface can still be built.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun MainApplication(
+    session: UserSession,
+    onLogout: () -> Unit
+) {
+    var selectedTab by remember {
+        mutableStateOf(AppTab.DASHBOARD)
+    }
+
+    val accounts = remember {
+        mutableStateListOf(
+            Account(
+                id = 1,
+                name = "Main account",
+                currency = "EUR",
+                balance = 1450.0
+            ),
+            Account(
+                id = 2,
+                name = "Freelance wallet",
+                currency = "USD",
+                balance = 620.0
+            )
+        )
+    }
+
+    val transactions = remember {
+        mutableStateListOf(
+            Transaction(
+                id = 1,
+                title = "Freelance payment",
+                category = "Income",
+                amount = 600.0,
+                income = true,
+                date = "Today"
+            ),
+            Transaction(
+                id = 2,
+                title = "Rent",
+                category = "Housing",
+                amount = 400.0,
+                income = false,
+                date = "Today"
+            ),
+            Transaction(
+                id = 3,
+                title = "Groceries",
+                category = "Food",
+                amount = 48.0,
+                income = false,
+                date = "Yesterday"
+            )
+        )
+    }
+
+    val loans = remember {
+        mutableStateListOf(
+            Loan(
+                id = 1,
+                name = "Education loan",
+                principal = 5000.0,
+                remaining = 3200.0,
+                monthlyPayment = 180.0,
+                currency = "EUR"
+            )
+        )
+    }
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(
+                modifier = Modifier.navigationBarsPadding()
+            ) {
+                AppTab.values().forEach { tab ->
+                    NavigationBarItem(
+                        selected = selectedTab == tab,
+                        onClick = {
+                            selectedTab = tab
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.label
+                            )
+                        },
+                        label = {
+                            Text(
+                                text = tab.label,
+                                fontSize = 10.sp
+                            )
+                        }
+                    )
+                }
+            }
+        }
+    ) { padding ->
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            when (selectedTab) {
+                AppTab.DASHBOARD -> {
+                    DashboardScreen(
+                        name = session.name,
+                        accounts = accounts,
+                        transactions = transactions
+                    )
+                }
+
+                AppTab.ACCOUNTS -> {
+                    AccountsScreen(
+                        accounts = accounts
+                    )
+                }
+
+                AppTab.TRANSACTIONS -> {
+                    TransactionsScreen(
+                        transactions = transactions
+                    )
+                }
+
+                AppTab.LOANS -> {
+                    LoansScreen(
+                        loans = loans
+                    )
+                }
+
+                AppTab.PROFILE -> {
+                    ProfileScreen(
+                        session = session,
+                        accountCount = accounts.size,
+                        transactionCount = transactions.size,
+                        loanCount = loans.size,
+                        onLogout = onLogout
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DashboardScreen(
+    name: String,
+    accounts: List<Account>,
+    transactions: List<Transaction>
+) {
+    val totalIncome = transactions
+        .filter { transaction ->
+            transaction.income
+        }
+        .sumOf { transaction ->
+            transaction.amount
+        }
+
+    val totalExpenses = transactions
+        .filter { transaction ->
+            !transaction.income
+        }
+        .sumOf { transaction ->
+            transaction.amount
+        }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
+        contentPadding = PaddingValues(
+            top = 18.dp,
+            bottom = 24.dp
+        ),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Text(
+                text = "Overview",
+                fontSize = 34.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            Surface(
+                color = MaterialTheme.colorScheme.primary.copy(
+                    alpha = 0.12f
+                ),
+                shape = RoundedCornerShape(22.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(18.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = CircleShape
+                    ) {
+                        Text(
+                            text = name
+                                .take(1)
+                                .uppercase(),
+                            color = MaterialTheme.colorScheme.onPrimary,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(
+                                horizontal = 18.dp,
+                                vertical = 12.dp
+                            )
+                        )
+                    }
+
+                    Spacer(
+                        modifier = Modifier.width(14.dp)
+                    )
+
+                    Column {
+                        Text(
+                            text = greetingText().uppercase(),
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = name,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Text(
+                            text = "Here is your financial overview",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                DashboardMetric(
+                    title = "Income",
+                    value = totalIncome,
+                    color = Color(0xFF25CF69),
+                    modifier = Modifier.weight(1f)
+                )
+
+                DashboardMetric(
+                    title = "Expenses",
+                    value = totalExpenses,
+                    color = Color(0xFFFF4D59),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        item {
+            DashboardMetric(
+                title = "Remaining this month",
+                value = totalIncome - totalExpenses,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+
+        item {
+            Text(
+                text = "Financial accounts",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Total balance across ${accounts.size} accounts",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        items(accounts) { account ->
+            AccountRow(
+                account = account
+            )
+        }
+
+        item {
+            Text(
+                text = "Recent transactions",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        items(transactions.take(5)) { transaction ->
+            TransactionRow(
+                transaction = transaction
+            )
+        }
+    }
+}
+
+private fun greetingText(): String {
+    val hour = Calendar
+        .getInstance()
+        .get(Calendar.HOUR_OF_DAY)
+
+    return when {
+        hour < 12 -> "Good morning"
+        hour < 18 -> "Good afternoon"
+        else -> "Good evening"
+    }
+}
+
+@Composable
+private fun DashboardMetric(
+    title: String,
+    value: Double,
+    color: Color,
+    modifier: Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+            Text(
+                text = title,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
+            )
+
+            Text(
+                text = formatMoney(value),
+                color = color,
+                fontSize = 25.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountsScreen(
+    accounts: MutableList<Account>
+) {
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScreenHeader(
+            title = "Accounts",
+            subtitle = "Manage money across currencies",
+            action = {
+                FilledTonalButton(
+                    onClick = {
+                        showDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+
+                    Text(" Add")
+                }
+            }
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(
+                bottom = 24.dp
+            )
+        ) {
+            items(accounts) { account ->
+                AccountRow(
+                    account = account
+                )
+            }
+        }
+    }
+
+    if (showDialog) {
+        SimpleAddDialog(
+            title = "Add account",
+            fieldLabel = "Account name",
+            onDismiss = {
+                showDialog = false
+            },
+            onAdd = { accountName ->
+                accounts.add(
+                    Account(
+                        id = System.currentTimeMillis(),
+                        name = accountName,
+                        currency = "EUR",
+                        balance = 0.0
+                    )
+                )
+
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun TransactionsScreen(
+    transactions: MutableList<Transaction>
+) {
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScreenHeader(
+            title = "Transactions",
+            subtitle = "Your Money In and Money Out",
+            action = {
+                FilledTonalButton(
+                    onClick = {
+                        showDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+
+                    Text(" Add")
+                }
+            }
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+            contentPadding = PaddingValues(
+                bottom = 24.dp
+            )
+        ) {
+            items(transactions) { transaction ->
+                TransactionRow(
+                    transaction = transaction
+                )
+            }
+        }
+    }
+
+    if (showDialog) {
+        SimpleAddDialog(
+            title = "Add transaction",
+            fieldLabel = "Transaction title",
+            onDismiss = {
+                showDialog = false
+            },
+            onAdd = { transactionTitle ->
+                transactions.add(
+                    0,
+                    Transaction(
+                        id = System.currentTimeMillis(),
+                        title = transactionTitle,
+                        category = "Other",
+                        amount = 25.0,
+                        income = false,
+                        date = "Today"
+                    )
+                )
+
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun LoansScreen(
+    loans: MutableList<Loan>
+) {
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        ScreenHeader(
+            title = "Loans",
+            subtitle = "Track installments and remaining debt",
+            action = {
+                FilledTonalButton(
+                    onClick = {
+                        showDialog = true
+                    }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null
+                    )
+
+                    Text(" Add")
+                }
+            }
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            contentPadding = PaddingValues(
+                bottom = 24.dp
+            )
+        ) {
+            items(loans) { loan ->
+                LoanRow(
+                    loan = loan
+                )
+            }
+        }
+    }
+
+    if (showDialog) {
+        SimpleAddDialog(
+            title = "Add loan",
+            fieldLabel = "Loan name",
+            onDismiss = {
+                showDialog = false
+            },
+            onAdd = { loanName ->
+                loans.add(
+                    Loan(
+                        id = System.currentTimeMillis(),
+                        name = loanName,
+                        principal = 1000.0,
+                        remaining = 1000.0,
+                        monthlyPayment = 100.0,
+                        currency = "EUR"
+                    )
+                )
+
+                showDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+private fun LoanRow(
+    loan: Loan
+) {
+    val paidAmount = loan.principal - loan.remaining
+
+    val progress = if (loan.principal > 0) {
+        (paidAmount / loan.principal)
+            .toFloat()
+            .coerceIn(
+                minimumValue = 0f,
+                maximumValue = 1f
+            )
+    } else {
+        0f
+    }
+
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
+        ) {
+            Text(
+                text = loan.name,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp
+            )
+
+            Text(
+                text = "Remaining: ${loan.currency} ${loan.remaining}",
+                color = MaterialTheme.colorScheme.error
+            )
+
+            Text(
+                text = "Monthly payment: ${loan.currency} ${loan.monthlyPayment}",
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
+            LinearProgressIndicator(
+                progress = progress,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileScreen(
+    session: UserSession,
+    accountCount: Int,
+    transactionCount: Int,
+    loanCount: Int,
+    onLogout: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(18.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Profile",
+            modifier = Modifier.fillMaxWidth(),
+            fontSize = 34.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        Surface(
+            color = MaterialTheme.colorScheme.primary.copy(
+                alpha = 0.12f
+            ),
+            shape = RoundedCornerShape(24.dp),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(26.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Surface(
+                    color = MaterialTheme.colorScheme.primary,
+                    shape = CircleShape
+                ) {
+                    Text(
+                        text = session.name
+                            .take(2)
+                            .uppercase(),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = 30.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(22.dp)
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(12.dp)
+                )
+
+                Text(
+                    text = session.name,
+                    fontSize = 25.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = session.email.ifBlank {
+                        "Demonstration profile"
+                    },
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(14.dp)
+        )
+
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ProfileStat(
+                value = accountCount.toString(),
+                label = "Accounts",
+                modifier = Modifier.weight(1f)
+            )
+
+            ProfileStat(
+                value = transactionCount.toString(),
+                label = "Entries",
+                modifier = Modifier.weight(1f)
+            )
+
+            ProfileStat(
+                value = loanCount.toString(),
+                label = "Loans",
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            tonalElevation = 2.dp,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier.padding(18.dp)
+            ) {
+                Text(
+                    text = "Account security",
+                    fontSize = 19.sp,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(
+                    modifier = Modifier.height(8.dp)
+                )
+
+                Text(
+                    text = "Supabase email authentication",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "HTTPS-only network communication",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                Text(
+                    text = "No service-role key is stored in the app",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(
+            modifier = Modifier.height(18.dp)
+        )
+
+        OutlinedButton(
+            onClick = onLogout,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Logout,
+                contentDescription = null
+            )
+
+            Spacer(
+                modifier = Modifier.width(8.dp)
+            )
+
+            Text("Log out")
+        }
+    }
+}
+
+@Composable
+private fun ScreenHeader(
+    title: String,
+    subtitle: String,
+    action: @Composable () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 16.dp,
+                vertical = 18.dp
+            ),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column {
+            Text(
+                text = title,
+                fontSize = 31.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = subtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
+            )
+        }
+
+        Spacer(
+            modifier = Modifier.weight(1f)
+        )
+
+        action()
+    }
+}
+
+@Composable
+private fun AccountRow(
+    account: Account
+) {
+    Surface(
+        shape = RoundedCornerShape(18.dp),
+        tonalElevation = 2.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.CreditCard,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+
+            Spacer(
+                modifier = Modifier.width(12.dp)
+            )
+
+            Column {
+                Text(
+                    text = account.name,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = account.currency,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "${account.currency} ${
+                    String.format(
+                        Locale.US,
+                        "%.2f",
+                        account.balance
+                    )
+                }",
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun TransactionRow(
+    transaction: Transaction
+) {
+    val transactionColor = if (transaction.income) {
+        Color(0xFF25CF69)
+    } else {
+        Color(0xFFFF4D59)
+    }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(15.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = if (transaction.income) {
+                    Icons.Default.ArrowCircleDown
+                } else {
+                    Icons.Default.ArrowCircleUp
+                },
+                contentDescription = null,
+                tint = transactionColor
+            )
+
+            Spacer(
+                modifier = Modifier.width(12.dp)
+            )
+
+            Column {
+                Text(
+                    text = transaction.title,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Text(
+                    text = "${transaction.category} · ${transaction.date}",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 12.sp
+                )
+            }
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+
+            Text(
+                text = "${if (transaction.income) "+" else "-"}${
+                    formatMoney(transaction.amount)
+                }",
+                color = transactionColor,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+private fun ProfileStat(
+    value: String,
+    label: String,
+    modifier: Modifier
+) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        tonalElevation = 2.dp
+    ) {
+        Column(
+            modifier = Modifier.padding(
+                vertical = 15.dp
+            ),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = value,
+                fontSize = 21.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = label,
+                fontSize = 11.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun SimpleAddDialog(
+    title: String,
+    fieldLabel: String,
+    onDismiss: () -> Unit,
+    onAdd: (String) -> Unit
+) {
+    var value by remember {
+        mutableStateOf("")
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(title)
+        },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = {
+                    value = it
+                },
+                label = {
+                    Text(fieldLabel)
+                },
+                singleLine = true
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (value.isNotBlank()) {
+                        onAdd(value.trim())
+                    }
+                }
+            ) {
+                Text("Add")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+private fun formatMoney(
+    value: Double
+): String {
+    return NumberFormat
+        .getCurrencyInstance(Locale.GERMANY)
+        .format(value)
+}

@@ -1,0 +1,1 @@
+<resources><style name="Theme.NomadWealth" parent="android:style/Theme.Material.Light.NoActionBar"><item name="android:fontFamily">sans</item><item name="android:statusBarColor">#07151D</item><item name="android:navigationBarColor">#07151D</item></style></resources>

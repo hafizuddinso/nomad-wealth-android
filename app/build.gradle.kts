@@ -1,3 +1,4 @@
+import groovy.json.JsonOutput
 import java.util.Properties
 plugins { id("com.android.application"); id("org.jetbrains.kotlin.android"); id("org.jetbrains.kotlin.plugin.compose") }
 val secrets=Properties(); val sf=rootProject.file("secrets.properties"); if(sf.exists()) sf.inputStream().use(secrets::load)
@@ -6,8 +7,8 @@ android {
  namespace="com.hafizuddin.nomadwealth"; compileSdk=35
  defaultConfig {
   applicationId="com.hafizuddin.nomadwealth"; minSdk=26; targetSdk=35; versionCode=1; versionName="1.0"
-  buildConfigField("String","SUPABASE_URL","\"${secret("SUPABASE_URL").replace("\"","\\\"")}\"")
-  buildConfigField("String","SUPABASE_ANON_KEY","\"${secret("SUPABASE_ANON_KEY").replace("\"","\\\"")}\"")
+  buildConfigField("String","https://kddlsbtfxgtmbpthtcjt.supabase.co","\"${secret("https://kddlsbtfxgtmbpthtcjt.supabase.co").replace("\"","\\\"")}\"")
+  buildConfigField("String","eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkZGxzYnRmeGd0bWJwdGh0Y2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NzI1MzEsImV4cCI6MjEwMTI0ODUzMX0.knFs8gbzsVIMDe2kqj55Yxwywob1q0U_9iW4OiPnh18","\"${secret("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtkZGxzYnRmeGd0bWJwdGh0Y2p0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU2NzI1MzEsImV4cCI6MjEwMTI0ODUzMX0.knFs8gbzsVIMDe2kqj55Yxwywob1q0U_9iW4OiPnh18").replace("\"","\\\"")}\"")
  }
  buildFeatures { compose=true; buildConfig=true }
  compileOptions { sourceCompatibility=JavaVersion.VERSION_17; targetCompatibility=JavaVersion.VERSION_17 }
